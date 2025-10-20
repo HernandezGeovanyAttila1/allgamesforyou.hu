@@ -1,0 +1,2 @@
+# allgamesforyou.hu
+domain 
