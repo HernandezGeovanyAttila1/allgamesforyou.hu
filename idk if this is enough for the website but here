@@ -1,0 +1,92 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Navbar } from "@/components/Navbar";
+import { GameCard } from "@/components/GameCard";
+import { toast } from "sonner";
+import heroBanner from "@/assets/hero-banner.jpg";
+import { seedGames } from "@/lib/seedGames";
+
+interface Game {
+  id: string;
+  title: string;
+  description: string;
+  image_url: string;
+}
+
+export default function Index() {
+  const [games, setGames] = useState<Game[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    seedGames().then(() => loadGames());
+  }, []);
+
+  const loadGames = async () => {
+    const { data, error } = await supabase
+      .from("games")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      toast.error("Failed to load games");
+      setLoading(false);
+      return;
+    }
+
+    setGames(data || []);
+    setLoading(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+
+      {/* Hero Section */}
+      <div className="relative h-[400px] overflow-hidden">
+        <img
+          src={heroBanner}
+          alt="Gaming Hero"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center space-y-4 px-4">
+            <h1 className="text-5xl md:text-7xl font-bold gradient-text">
+              Welcome to GameHub
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-2xl">
+              Explore amazing games and share your thoughts with the community
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Games Grid */}
+      <div className="container mx-auto px-4 py-12">
+        <h2 className="text-3xl font-bold mb-8">Featured Games</h2>
+
+        {loading ? (
+          <p className="text-center text-muted-foreground">Loading games...</p>
+        ) : games.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground text-lg">
+              No games available yet. Check back soon!
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {games.map((game) => (
+              <GameCard
+                key={game.id}
+                id={game.id}
+                title={game.title}
+                description={game.description}
+                imageUrl={game.image_url}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
